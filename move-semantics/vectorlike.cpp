@@ -15,16 +15,14 @@ public:
         , size_{0}
     { }
 
-    explicit Vector(size_t size)
+    explicit Vector(size_t size) : items_{new int[size]}, size_{size}
     {
-        items_ = new int[size];
-        size_ = size;
-
-        // for(int i = 0; i < size; ++i)
-        // {
-        //     items_[i] = 0;
-        // }
         std::fill(items_, items_ + size_, 0);
+    }
+
+    Vector(std::initializer_list<int> il) : items_{new int[il.size()]}, size_{il.size()}
+    {
+        std::copy(il.begin(), il.end(), items_);
     }
 
     ~Vector()
@@ -116,6 +114,25 @@ TEST_CASE("Vector")
             CHECK(vec.size() == 10);
         }
     }
+
+    SECTION("constructor with initializer_list")
+    {
+        Vector vec = {1, 2, 3};
+        CHECK(vec.size() == 3);
+
+        CHECK(vec[0] == 1);
+        CHECK(vec[1] == 2);
+        CHECK(vec[2] == 3);
+
+        SECTION("construction with () & {}")
+        {
+            Vector vec1(10);
+            CHECK(vec1.size() == 10);
+
+            Vector vec2{10};
+            CHECK(vec2.size() == 1);            
+        }
+    }
 }
 
 void print(const Vector& vec)
@@ -142,4 +159,15 @@ TEST_CASE("Vector - indexing")
     CHECK(vec[2] == 3);
 
     print(vec);
+}
+
+TEST_CASE("init with {}")
+{
+    int x1;
+    int x2(665);
+    int x3{665};
+    int x4 = 10;
+
+    char c1(x2);
+    char c2{static_cast<char>(x2)};
 }
