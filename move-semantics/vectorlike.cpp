@@ -91,7 +91,7 @@ public:
 
     reference operator[](size_t index)
     {
-        return items_[index];
+        return items_[index]; // *(items_ + index)
     }
 
     const_reference operator[](size_t index) const
