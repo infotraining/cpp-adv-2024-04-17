@@ -15,12 +15,16 @@ public:
         , size_{0}
     { }
 
-    explicit Vector(size_t size) : items_{new int[size]}, size_{size}
+    explicit Vector(size_t size)
+        : items_{new int[size]}
+        , size_{size}
     {
         std::fill(items_, items_ + size_, 0);
     }
 
-    Vector(std::initializer_list<int> il) : items_{new int[il.size()]}, size_{il.size()}
+    Vector(std::initializer_list<int> il)
+        : items_{new int[il.size()]}
+        , size_{il.size()}
     {
         std::copy(il.begin(), il.end(), items_);
     }
@@ -80,6 +84,18 @@ private:
     size_t size_{};
 };
 
+std::ostream& operator<<(std::ostream& out, const Vector& vec)
+{
+    out << "{ ";
+    for (const auto& item : vec)
+    {
+        out << item << " ";
+    }
+    out << "}";
+
+    return out;
+}
+
 TEST_CASE("Vector")
 {
     SECTION("default construction")
@@ -131,7 +147,7 @@ TEST_CASE("Vector")
         CHECK(vec.size() == 3);
 
         CHECK(vec == Vector{1, 2, 3});
-        CHECK(vec != Vector{1, 2, 3, 4}); 
+        CHECK(vec != Vector{1, 2, 3, 4});
 
         SECTION("construction with () & {}")
         {
@@ -139,21 +155,14 @@ TEST_CASE("Vector")
             CHECK(vec1.size() == 10);
 
             Vector vec2{10};
-            CHECK(vec2.size() == 1);            
+            CHECK(vec2.size() == 1);
         }
     }
 }
 
 void print(const Vector& vec)
 {
-    std::cout << "vec: ";
-    // for (size_t i = 0; i < vec.size(); ++i)
-    // {
-    //     std::cout << vec[i] << " ";
-    // }
-    for(const auto& item : vec)
-        std::cout << item << " ";
-    std::cout << "\n";
+    std::cout << "vec: " << vec << "\n";
 }
 
 TEST_CASE("Vector - indexing")
@@ -179,4 +188,41 @@ TEST_CASE("init with {}")
 
     char c1(x2);
     char c2{static_cast<char>(x2)};
+}
+
+/////////////////////////////////////////////////////////
+// operators
+
+struct X
+{
+    int value;
+
+    X(int v)
+        : value{v}
+    { }
+
+    // X operator+(const X& rhs)
+    // {
+    //     return X{this->value + rhs.value};
+    // }
+
+    friend X operator+(const X& a, const X& b)
+    {
+        return X{a.value + b.value};
+    }
+};
+
+bool operator==(const X& a, const X& b)
+{
+    return a.value == b.value;
+}
+
+TEST_CASE("operators")
+{
+    X x1{10};
+    X x2{20};
+
+    CHECK(x1 + x2 == 30);
+    CHECK(x1 + 10 == 20);
+    CHECK(10 + x2 == 30);
 }
