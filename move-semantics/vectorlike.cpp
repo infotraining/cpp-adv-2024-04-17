@@ -45,6 +45,16 @@ public:
         return items_[index];
     }
 
+    bool operator==(const Vector& rhs) const
+    {
+        return std::equal(begin(), end(), rhs.begin(), rhs.end());
+    }
+
+    bool operator!=(const Vector& rhs) const
+    {
+        return !(*this == rhs);
+    }
+
     iterator begin()
     {
         return items_;
@@ -120,9 +130,8 @@ TEST_CASE("Vector")
         Vector vec = {1, 2, 3};
         CHECK(vec.size() == 3);
 
-        CHECK(vec[0] == 1);
-        CHECK(vec[1] == 2);
-        CHECK(vec[2] == 3);
+        CHECK(vec == Vector{1, 2, 3});
+        CHECK(vec != Vector{1, 2, 3, 4}); 
 
         SECTION("construction with () & {}")
         {
