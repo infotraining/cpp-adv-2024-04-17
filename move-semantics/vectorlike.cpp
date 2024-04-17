@@ -29,6 +29,37 @@ public:
         std::copy(il.begin(), il.end(), items_);
     }
 
+    /* copy semantics */
+    Vector(const Vector& vec)
+        : items_{new int[vec.size()]}
+        , size_{vec.size()}
+    {
+        std::copy(vec.begin(), vec.end(), items_);
+    }
+
+    Vector& operator=(const Vector& vec)
+    {
+        // if (this != &vec)
+        // {
+        //     delete[] items_;
+
+        //     items_ = new int[vec.size()];
+        //     size_ = vec.size();
+        //     std::copy(vec.begin(), vec.end(), items_);
+        // }
+
+        Vector temp{vec}; // cc
+        swap(temp);
+
+        return *this;
+    }
+    
+    void swap(Vector& vec)
+    {
+        std::swap(items_, vec.items_);
+        std::swap(size_, vec.size_);
+    }
+
     ~Vector()
     {
         delete[] items_;
@@ -158,6 +189,25 @@ TEST_CASE("Vector")
             CHECK(vec2.size() == 1);
         }
     }
+
+    SECTION("copy semantics")
+    {
+        SECTION("copy constructor")
+        {
+            Vector vec1 = {1, 2, 3};
+            Vector vec2 = vec1;
+
+            CHECK(vec1 == vec2);
+        }
+
+        SECTION("copy assignment")
+        {
+            Vector vec1 = {1, 2, 3};
+            vec1 = vec1 = Vector{665, 667};
+
+            CHECK(vec1 == Vector{665, 667});
+        }
+    }
 }
 
 void print(const Vector& vec)
@@ -212,6 +262,14 @@ struct X
     }
 };
 
+struct Y
+{
+    std::string name;
+    std::vector<int> data;
+
+    /* implementation */
+};
+
 bool operator==(const X& a, const X& b)
 {
     return a.value == b.value;
@@ -225,4 +283,44 @@ TEST_CASE("operators")
     CHECK(x1 + x2 == 30);
     CHECK(x1 + 10 == 20);
     CHECK(10 + x2 == 30);
+
+    X x3 = x2;
+    CHECK(x3 == 20);
+}
+
+//////////////////////////////////////////////////////////////
+// swap
+
+TEST_CASE("swap")
+{
+    SECTION("primitive types")
+    {
+        int x = 10;
+        int y = 20;
+
+        std::swap(x, y);
+        CHECK(x == 20);
+        CHECK(y == 10);
+    }
+
+    SECTION("std lib")
+    {
+        std::string str1 = "abc";
+        std::string str2 = "def";
+
+        str1.swap(str2);
+        CHECK(str1 == "def");
+        CHECK(str2 == "abc");
+    }
+
+    SECTION("Vector")
+    {
+        Vector vec1 = {1, 2, 3};
+        Vector vec2 = {665, 667};
+
+        vec1.swap(vec2);
+
+        CHECK(vec1 == Vector{665, 667});
+        CHECK(vec2 == Vector{1, 2, 3});
+    }
 }
