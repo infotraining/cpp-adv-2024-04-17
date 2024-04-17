@@ -1,4 +1,4 @@
-#define ENABLE_MOVE
+//#define ENABLE_MOVE
 #include "helpers.hpp"
 
 #include <catch2/catch_test_macros.hpp>
@@ -31,4 +31,18 @@ TEST_CASE("move semantics motivation")
     Helpers::Vector vec = create_and_fill();
 
     Helpers::String::print_stats("Total");
+}
+
+void foo()
+{
+
+}
+
+TEST_CASE("lvalue")
+{
+    int x = 10;
+    x = 32;
+
+    const int cx = 20;
+    // cx = 665;
 }

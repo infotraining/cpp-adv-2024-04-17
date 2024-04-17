@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <catch2/catch_test_macros.hpp>
 #include <iostream>
+#include <utility>
 
 class Vector
 {
@@ -35,25 +36,38 @@ public:
         , size_{vec.size()}
     {
         std::copy(vec.begin(), vec.end(), items_);
+        std::cout << "Vector(cc: " << *this << ")\n";
     }
 
     Vector& operator=(const Vector& vec)
     {
-        // if (this != &vec)
-        // {
-        //     delete[] items_;
-
-        //     items_ = new int[vec.size()];
-        //     size_ = vec.size();
-        //     std::copy(vec.begin(), vec.end(), items_);
-        // }
-
         Vector temp{vec}; // cc
         swap(temp);
 
         return *this;
     }
-    
+
+    /* move semantics */
+    Vector(Vector&& vec)
+        : items_{std::exchange(vec.items_, nullptr)}
+        , size_{std::exchange(vec.size_, 0)}
+    {
+        std::cout << "Vector(mv: " << *this << ")\n";
+    }
+
+    Vector& operator=(Vector&& vec)
+    {
+        if (this != &vec)
+        {
+            Vector temp{std::move(vec)}; // cc
+            swap(temp);            
+
+            std::cout << "Vector(mv: " << *this << ")\n";
+        }
+
+        return *this;
+    }
+
     void swap(Vector& vec)
     {
         std::swap(items_, vec.items_);
@@ -68,6 +82,11 @@ public:
     size_t size() const
     {
         return size_;
+    }
+
+    int* data() const
+    {
+        return items_;
     }
 
     reference operator[](size_t index)
@@ -110,21 +129,28 @@ public:
         return items_ + size_;
     }
 
+    friend std::ostream& operator<<(std::ostream& out, const Vector& vec)
+    {
+        out << "{ ";
+        for (const auto& item : vec)
+        {
+            out << item << " ";
+        }
+        out << "}";
+
+        return out;
+    }
+
 private:
     int* items_ = nullptr;
     size_t size_{};
 };
 
-std::ostream& operator<<(std::ostream& out, const Vector& vec)
+Vector create_large_vec()
 {
-    out << "{ ";
-    for (const auto& item : vec)
-    {
-        out << item << " ";
-    }
-    out << "}";
+    Vector vec(1'000'000);
 
-    return out;
+    return vec;
 }
 
 TEST_CASE("Vector")
@@ -208,6 +234,33 @@ TEST_CASE("Vector")
             CHECK(vec1 == Vector{665, 667});
         }
     }
+
+    SECTION("move semantics")
+    {
+        SECTION("move constructor")
+        {
+            Vector vec1 = {1, 2, 3};
+            Vector vec2 = std::move(vec1);
+
+            CHECK(vec2 == Vector{1, 2, 3});
+            CHECK(vec1.data() == nullptr);
+            CHECK(vec1.size() == 0);
+        }
+
+        SECTION("move assignment")
+        {
+            Vector vec1 = {1, 2, 3};
+            Vector vec2 = {665, 667};
+
+            vec2 = std::move(vec1);
+
+            CHECK(vec2 == Vector{1, 2, 3});
+            CHECK(vec1.data() == nullptr);
+            CHECK(vec1.size() == 0);
+
+            vec2 = std::move(vec2);
+        }
+    }
 }
 
 void print(const Vector& vec)
@@ -262,13 +315,29 @@ struct X
     }
 };
 
-struct Y
+struct Data
 {
     std::string name;
-    std::vector<int> data;
+    Vector data;
 
     /* implementation */
 };
+
+Data create_dataset(std::string name, size_t size)
+{
+    Data ds{std::move(name), Vector(size)};
+    return ds;
+}
+
+TEST_CASE("support for copy/move semantics")
+{
+    Data d1{"d1", {1, 2, 3}};
+    Data d2 = d1;
+
+    Data d3 = std::move(d1);
+
+    d3 = create_dataset("dataset", 20);
+}
 
 bool operator==(const X& a, const X& b)
 {
