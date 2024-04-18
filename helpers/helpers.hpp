@@ -174,6 +174,11 @@ namespace Helpers
         return out;
     }
 
+    inline bool operator==(const String& lhs, const String& rhs)
+    {
+        return lhs.value() == rhs.value();
+    }
+
     struct Vector : std::vector<String>
     {
         using std::vector<String>::vector;

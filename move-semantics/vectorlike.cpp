@@ -11,7 +11,7 @@ public:
     using reference = int&;
     using const_reference = const int&;
 
-    Vector()
+    Vector() noexcept
         : items_{nullptr}
         , size_{0}
     { }
@@ -48,18 +48,18 @@ public:
     }
 
     /* move semantics */
-    Vector(Vector&& vec)
+    Vector(Vector&& vec) noexcept
         : items_{std::exchange(vec.items_, nullptr)}
         , size_{std::exchange(vec.size_, 0)}
     {
         std::cout << "Vector(mv: " << *this << ")\n";
     }
 
-    Vector& operator=(Vector&& vec)
+    Vector& operator=(Vector&& vec) noexcept
     {
         if (this != &vec)
         {
-            Vector temp{std::move(vec)}; // cc
+            Vector temp{std::move(vec)}; // mv
             swap(temp);            
 
             std::cout << "Vector(mv: " << *this << ")\n";
@@ -68,23 +68,23 @@ public:
         return *this;
     }
 
-    void swap(Vector& vec)
+    void swap(Vector& vec) noexcept
     {
         std::swap(items_, vec.items_);
         std::swap(size_, vec.size_);
     }
 
-    ~Vector()
+    ~Vector() noexcept
     {
         delete[] items_;
     }
 
-    size_t size() const
+    size_t size() const noexcept
     {
         return size_;
     }
 
-    int* data() const
+    int* data() const noexcept
     {
         return items_;
     }
@@ -99,32 +99,32 @@ public:
         return items_[index];
     }
 
-    bool operator==(const Vector& rhs) const
+    bool operator==(const Vector& rhs) const noexcept
     {
         return std::equal(begin(), end(), rhs.begin(), rhs.end());
     }
 
-    bool operator!=(const Vector& rhs) const
+    bool operator!=(const Vector& rhs) const noexcept
     {
         return !(*this == rhs);
     }
 
-    iterator begin()
+    iterator begin() noexcept
     {
         return items_;
     }
 
-    iterator end()
+    iterator end() noexcept
     {
         return items_ + size_;
     }
 
-    const_iterator begin() const
+    const_iterator begin() const noexcept 
     {
         return items_;
     }
 
-    const_iterator end() const
+    const_iterator end() const noexcept
     {
         return items_ + size_;
     }
@@ -260,6 +260,34 @@ TEST_CASE("Vector")
 
             vec2 = std::move(vec2);
         }
+    }
+
+    SECTION("noexcept")
+    {
+        std::vector<Vector> vec;
+
+        vec.push_back(Vector{1});
+
+        std::cout << "--------------------\n";
+
+        vec.push_back(Vector{1, 2});
+
+        std::cout << "--------------------\n";
+
+        vec.push_back(Vector{1, 2, 3});
+
+        std::cout << "--------------------\n";
+
+        vec.push_back(Vector{1, 2, 3, 4});
+
+        std::cout << "--------------------\n";
+
+        vec.push_back(Vector{1, 2, 3, 4, 5});
+
+        std::cout << "--------------------\n";
+
+        vec.push_back(Vector{1, 2, 3, 4, 5, 6});
+
     }
 }
 
