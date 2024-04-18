@@ -19,7 +19,7 @@ public:
         std::cout << "Destructor ~Human(" << name_ << ")" << std::endl;
     }
 
-    void set_partner(std::shared_ptr<Human> partner)
+    void set_partner(std::weak_ptr<Human> partner)
     {
         partner_ = partner;
     }
@@ -28,14 +28,14 @@ public:
     {
         std::cout << "My name is " << name_ << std::endl;
 
-        if (partner_)
+        if (auto living_partner = partner_.lock(); living_partner)
         {
-            std::cout << "My partner is " << partner_->name_ << std::endl;
+            std::cout << "My partner is " << living_partner->name_ << std::endl;
         }
     }
 
 private:
-    std::shared_ptr<Human> partner_;
+    std::weak_ptr<Human> partner_;
     std::string name_;
 };
 
@@ -47,10 +47,10 @@ TEST_CASE("shared_ptrs leak - circular dependency")
     // RC wife == 1
     auto wife = std::make_shared<Human>("Ewa");
 
-    // RC wife ==2
+    // RC wife == 1
     husband->set_partner(wife);
 
-    // RC husband == 2
+    // RC husband == 1
     wife->set_partner(husband);
 
     husband->description();
