@@ -3,13 +3,15 @@
 #include <iostream>
 #include <utility>
 
+template<typename T = int>
 class Vector
 {
 public:
-    using iterator = int*;
-    using const_iterator = const int*;
-    using reference = int&;
-    using const_reference = const int&;
+    using iterator = T*;
+    using const_iterator = const T*;
+    using reference = T&;
+    using const_reference = const T&;
+    using value_type = T;
 
     Vector() noexcept
         : items_{nullptr}
@@ -17,14 +19,14 @@ public:
     { }
 
     explicit Vector(size_t size)
-        : items_{new int[size]}
+        : items_{new T[size]}
         , size_{size}
     {
         std::fill(items_, items_ + size_, 0);
     }
 
-    Vector(std::initializer_list<int> il)
-        : items_{new int[il.size()]}
+    Vector(std::initializer_list<T> il)
+        : items_{new T[il.size()]}
         , size_{il.size()}
     {
         std::copy(il.begin(), il.end(), items_);
@@ -32,7 +34,7 @@ public:
 
     /* copy semantics */
     Vector(const Vector& vec)
-        : items_{new int[vec.size()]}
+        : items_{new T[vec.size()]}
         , size_{vec.size()}
     {
         std::copy(vec.begin(), vec.end(), items_);
@@ -84,7 +86,7 @@ public:
         return size_;
     }
 
-    int* data() const noexcept
+    T* data() const noexcept
     {
         return items_;
     }
@@ -142,11 +144,11 @@ public:
     }
 
 private:
-    int* items_ = nullptr;
+    T* items_ = nullptr;
     size_t size_{};
 };
 
-Vector create_large_vec()
+Vector<int> create_large_vec()
 {
     Vector vec(1'000'000);
 
@@ -264,7 +266,7 @@ TEST_CASE("Vector")
 
     SECTION("noexcept")
     {
-        std::vector<Vector> vec;
+        std::vector<Vector<int>> vec;
 
         vec.push_back(Vector{1});
 
@@ -291,7 +293,8 @@ TEST_CASE("Vector")
     }
 }
 
-void print(const Vector& vec)
+template <typename T>
+void print(const T& vec)
 {
     std::cout << "vec: " << vec << "\n";
 }
@@ -346,7 +349,7 @@ struct X
 struct Data
 {
     std::string name;
-    Vector data;
+    Vector<int> data;
 
     /* implementation */
 };
