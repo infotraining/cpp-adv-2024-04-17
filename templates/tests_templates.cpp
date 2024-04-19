@@ -76,6 +76,15 @@ namespace Exercise
         }
         return end;
     }
+
+    template<typename ContainerType>
+    void zero(ContainerType& container)
+    {
+        using T = typename ContainerType::value_type;
+       
+        for(auto&& element : container)
+            element = T{};
+    }
 } // namespace Exercise
 
 TEST_CASE("function templates")
@@ -139,6 +148,55 @@ TEMPLATE_TEST_CASE("find_if", "[algo]", (std::vector<int>), (std::list<int>))
         auto pos = Exercise::find_if(vec.begin(), vec.end(), &is_even);
         CHECK(pos == vec.end());
     }
+}
+
+TEST_CASE("zero")
+{
+    std::vector<int> vec = {1, 2, 3};
+    Exercise::zero(vec);
+    CHECK(vec == std::vector{0, 0, 0});
+
+    std::list<std::string> lst = {"abc", "def"};
+    Exercise::zero(lst);
+    CHECK(lst == std::list{""s, ""s});
+
+    std::vector<bool> flags = {1, 0, 0, 1};
+    Exercise::zero(flags);
+    CHECK((flags == std::vector<bool>{0, 0, 0}));
+}
+
+struct X
+{
+    static int A(int x)
+    {
+        return x * x;
+    }
+};
+
+struct Y
+{
+    struct A
+    {
+        int value;
+ 
+        A(int x) : value{x}
+        {}
+    };
+};
+
+template <typename T>
+auto dependent_name_context(int x)
+{
+    auto value = typename T::A(x);
+ 
+    return value;
+}
+
+TEST_CASE("type dependent names")
+{
+    auto value1 = X::A(42);
+
+    auto value2 = Y::A(42);
 }
 
 TEST_CASE("class templates")

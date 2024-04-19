@@ -117,3 +117,34 @@ TEST_CASE("ref collapsing")
 
     collapse<int&&>(x);
 }
+
+struct Lambda_567345623786587
+{
+    std::vector<std::string>& vec;
+
+    Lambda_567345623786587(std::vector<std::string>& vec) : vec{vec}
+    {        
+    }
+
+    template <typename T>
+    auto operator()(T&& item) const
+    {
+        vec.push_back(std::forward<decltype(item)>(item));
+    }
+};
+
+TEST_CASE("auto&& in lambda")
+{
+    std::vector<std::string> vec;
+
+    auto pusher = [&vec](auto&& item) {
+        vec.push_back(std::forward<decltype(item)>(item));
+    };
+
+    pusher("one");
+    pusher("two");
+    pusher("three");
+
+    const std::string word = "four";
+    pusher(word);
+}
