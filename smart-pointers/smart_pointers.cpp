@@ -103,6 +103,19 @@ namespace ModernCpp
     }
 } // namespace ModernCpp
 
+namespace LegacyCode
+{
+    int* create_buffer()
+    {
+        return new int[1024];
+    }
+
+    void free_buffer(int* b)
+    {
+        delete[] b;
+    }
+} // namespace LegacyCode
+
 TEST_CASE("dynamic memory management in modern C+")
 {
     using namespace ModernCpp;
@@ -146,6 +159,36 @@ TEST_CASE("dynamic memory management in modern C+")
 
         // vec.at(100);
     }
+
+    SECTION("unique_ptr & dynamic arrays")
+    {
+        SECTION("legacy")
+        {
+            bool early_exit = true;
+
+            int* buffer = LegacyCode::create_buffer();
+            buffer[56] = 543;
+
+            if (early_exit)
+            {
+                LegacyCode::free_buffer(buffer);
+                return;
+            }
+
+            LegacyCode::free_buffer(buffer);
+        }
+
+        SECTION("modern")
+        {
+            bool early_exit = true;
+
+            std::unique_ptr<int[], void(*)(int*)> buffer(LegacyCode::create_buffer(), &LegacyCode::free_buffer);
+            buffer[56] = 543;
+
+            if (early_exit)
+                return;
+        }
+    }
 }
 
 TEST_CASE("shared_ptr")
@@ -179,10 +222,9 @@ TEST_CASE("shared_ptr")
         {
             std::shared_ptr<Gadget> temp_ptr(wp);
         }
-        catch(const std::bad_weak_ptr& e)
+        catch (const std::bad_weak_ptr& e)
         {
             std::cout << e.what() << "\n";
         }
-    } 
-
+    }
 }
