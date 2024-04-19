@@ -4,13 +4,14 @@
 
 #include "helpers.hpp"
 
-#include <catch2/catch_test_macros.hpp>
+#include <algorithm>
 #include <catch2/catch_template_test_macros.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <iostream>
+#include <list>
 #include <memory>
 #include <string>
 #include <vector>
-#include <list>
 
 using Helpers::Gadget;
 using namespace std::literals;
@@ -49,12 +50,12 @@ namespace Auto
 
 namespace Exercise
 {
-    template<typename Iter, typename Value>
+    template <typename Iter, typename Value>
     Iter find(Iter begin, Iter end, const Value& value)
     {
-        for(auto it = begin; it != end; ++it)
+        for (auto it = begin; it != end; ++it)
         {
-            if(*it == value)
+            if (*it == value)
             {
                 return it;
             }
@@ -62,14 +63,14 @@ namespace Exercise
         return end;
     }
 
-    template<typename Iter, typename Predicate>
+    template <typename Iter, typename Predicate>
     Iter find_if(Iter begin, Iter end, Predicate predicate)
     {
         std::cout << __PRETTY_FUNCTION__ << "\n";
 
-        for(auto it = begin; it != end; ++it)
+        for (auto it = begin; it != end; ++it)
         {
-            if(predicate(*it))
+            if (predicate(*it))
             {
                 return it;
             }
@@ -77,14 +78,6 @@ namespace Exercise
         return end;
     }
 
-    template<typename ContainerType>
-    void zero(ContainerType& container)
-    {
-        using T = typename ContainerType::value_type;
-       
-        for(auto&& element : container)
-            element = T{};
-    }
 } // namespace Exercise
 
 TEST_CASE("function templates")
@@ -136,7 +129,7 @@ TEMPLATE_TEST_CASE("find_if", "[algo]", (std::vector<int>), (std::list<int>))
     SECTION("value in range")
     {
         TestType vec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        auto pos = Exercise::find_if(vec.begin(), vec.end(), [](int x) { return x % 2 == 0;});
+        auto pos = Exercise::find_if(vec.begin(), vec.end(), [](int x) { return x % 2 == 0; });
         CHECK(pos != vec.end());
         CHECK(*pos == 2);
     }
@@ -149,6 +142,42 @@ TEMPLATE_TEST_CASE("find_if", "[algo]", (std::vector<int>), (std::list<int>))
         CHECK(pos == vec.end());
     }
 }
+
+namespace Exercise
+{
+    namespace Ver_1
+    {
+        template <typename ContainerType>
+        void zero(ContainerType& container)
+        {
+            using T = std::remove_const_t<std::remove_reference_t<decltype(*std::begin(container))>>; // remove const and reference
+
+            for (auto&& element : container)
+            {
+                if constexpr (std::is_same_v<ContainerType, std::vector<bool>>)
+                    element = false;
+                else
+                    element = T{};
+            }
+        }
+    } // namespace Ver_1
+
+    inline namespace Ver_2
+    {
+        template <typename ContainerType>
+        void zero(ContainerType& container)
+        {
+            using T = std::remove_const_t<std::remove_reference_t<decltype(*std::begin(container))>>; // remove const and reference
+            constexpr bool is_vector_of_bool = std::is_same_v<ContainerType, std::vector<bool>>;
+            using TValue = std::conditional_t<is_vector_of_bool, bool, T>;
+
+            for (auto&& element : container)
+            {
+                element = TValue{};
+            }
+        }
+    } // namespace Ver_2
+} // namespace Exercise
 
 TEST_CASE("zero")
 {
@@ -163,6 +192,35 @@ TEST_CASE("zero")
     std::vector<bool> flags = {1, 0, 0, 1};
     Exercise::zero(flags);
     CHECK((flags == std::vector<bool>{0, 0, 0}));
+
+    int arr[] = {1, 2, 3};
+    Exercise::zero(arr);
+    CHECK(std::all_of(std::begin(arr), std::end(arr), [](int x) { return x == 0; }));
+}
+
+namespace Exercise
+{
+    template <typename ContainerType>
+    auto sum(const ContainerType& container)
+    {
+        // typename ContainerType::value_type result{};
+        using T = std::remove_const_t<std::remove_reference_t<decltype(*std::begin(container))>>; // remove const and reference
+
+        T result{};
+
+        for (auto&& element : container)
+            result += element;
+        return result;
+    }
+} // namespace Exercise
+
+TEST_CASE("sum")
+{
+    std::vector<int> vec = {1, 2, 3};
+    CHECK(Exercise::sum(vec) == 6);
+
+    int arr[] = {1, 2, 3};
+    CHECK(Exercise::sum(arr) == 6);
 }
 
 struct X
@@ -178,9 +236,10 @@ struct Y
     struct A
     {
         int value;
- 
-        A(int x) : value{x}
-        {}
+
+        A(int x)
+            : value{x}
+        { }
     };
 };
 
@@ -188,7 +247,7 @@ template <typename T>
 auto dependent_name_context(int x)
 {
     auto value = typename T::A(x);
- 
+
     return value;
 }
 
